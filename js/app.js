@@ -54,18 +54,20 @@ export async function boot({ onUpdate, allowNoScenario = false }) {
   let fetching = null;
   let monthTimer = null;
   let backoffUntil = 0;
+  let lastFetchAt = 0;
   const refreshScenario = () => {
     if (!remote) return Promise.resolve();
     if (!fetching) {
       fetching = store.fetchScenario()
-        .then((raw) => { setRemoteScenario(raw); backoffUntil = 0; })
+        .then((raw) => { setRemoteScenario(raw); backoffUntil = 0; lastFetchAt = Date.now(); })
         .catch((e) => { console.error(e); backoffUntil = Date.now() + 3000; setTimeout(recompute, 3100); })
         .finally(() => { fetching = null; scheduleMonthRefetch(store.getSnapshot().game); recompute(); });
     }
     return fetching;
   };
   // Scenariusz starszy od stanu gry (rev) → najpierw pobierz nowy, potem przelicz (inaczej kursy mogłyby być null).
-  const isStale = (game) => remote && game && (!ctx.reveal || Number(ctx.reveal.rev) < Number(game.rev));
+  const isStale = (game) => remote && game && ctx.scenario && Number(ctx.reveal.rev) < Number(game.rev);
+  let probedRev = -1;
   const scheduleMonthRefetch = (game) => {
     clearTimeout(monthTimer);
     if (!remote || !ctx.scenario || !game || game.phase !== 'open' || !game.turnStartedAt) return;
@@ -83,8 +85,20 @@ export async function boot({ onUpdate, allowNoScenario = false }) {
     if (isStale(snap.game)) { if (Date.now() >= backoffUntil) refreshScenario(); return; }
     ctx.snapshot = snap;
     ctx.game = snap.game;
-    if (!ctx.scenario) { ctx.state = null; onUpdate(ctx); return; }
-    ctx.state = replay(ctx.scenario, snap.teams, snap.events);
+    if (!ctx.scenario) {
+      ctx.state = null;
+      // panel prowadzącego bez scenariusza: sprawdź ponownie, gdy zmieni się stan gry (np. wgranie z innej karty)
+      if (remote && snap.game && Number(snap.game.rev) !== probedRev && Date.now() >= backoffUntil) { probedRev = Number(snap.game.rev); refreshScenario(); }
+      onUpdate(ctx);
+      return;
+    }
+    const state = replay(ctx.scenario, snap.teams, snap.events);
+    // Zdarzenia (np. zamknięcie tury) mogą dotrzeć przed zmianą wiersza gry/scenariusza: brakujący kurs = pobierz scenariusz jeszcze raz.
+    if (remote && ctx.scenario.assets.some((a) => a.prices && a.prices[state.priceIndex] == null)) {
+      if (Date.now() - lastFetchAt > 1000) refreshScenario(); else setTimeout(recompute, 1000);
+      return;
+    }
+    ctx.state = state;
     const key = snap.game ? `${snap.game.phase}|${snap.game.turn}` : '';
     if (remote && key !== lastKey) { lastKey = key; scheduleMonthRefetch(snap.game); }
     onUpdate(ctx);

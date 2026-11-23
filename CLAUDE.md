@@ -144,8 +144,9 @@ Stan na: 24.11.2026 (po sesji z podpięciem Supabase i łatkami; szczegóły w s
    - Zgadywanie kodów: kody 6-cyfrowe + blokada 15 s po 10 błędach (logowanie, handel, zagadki); `host_check` blokuje po 8 błędach PIN-u.
      Pozostałe `host_*` nie liczą błędnych PIN-ów → PIN min. 8 znaków (`admin_init_game` to wymusza).
    - Testy: `npm test` (33) + testy SQL na pglite (`tests/sql/`) przechodzą; migracja 002 zastosowana na „skipp" i zweryfikowana przez REST (get_scenario → null, team_login → status, blokada PIN-u).
-   - NIE zrobiono jeszcze testu na żywo (kolejny krok).
-3. **Przetestować SupabaseStore na żywo.** Nigdy nie był uruchomiony, bo proxy w sesji chmurowej blokował esm.sh. Zrobić próbną turę w trybie testowym na 2 telefonach i projektorze.
+   - Test na żywo przeciw „skipp" ZROBIONY 24.11 (patrz sekcja 8).
+3. ~~Przetestować SupabaseStore na żywo~~ — zrobione (sekcja 8); do powtórzenia na 2 prawdziwych telefonach z prawdziwym scenariuszem.
+   (stara treść:) Nigdy nie był uruchomiony, bo proxy w sesji chmurowej blokował esm.sh. Zrobić próbną turę w trybie testowym na 2 telefonach i projektorze.
 4. **Wgrać prawdziwy scenariusz.**
    - Scenariusz v3 (kursy 9 aktywów × 6 tur, katalog newsów, eventy miesięczne, Pewniak, 6 zagadek, słowniczek) powstaje w innej rozmowie. Jędrzej dostarczy go jako JSON lub Excel.
    - Przekonwertować do formatu z `docs/SCENARIO.md`, uruchomić walidator i `npm test`.
@@ -209,3 +210,12 @@ Stan na: 24.11.2026 (po sesji z podpięciem Supabase i łatkami; szczegóły w s
 - Pliki mają końce linii LF w repo, Git ostrzega o CRLF — to normalne.
 - Weryfikacja bazy bez uprawnień: `curl` na `https://uxmrjbbyrpnikllbebrr.supabase.co/rest/v1/rpc/<fn>` z nagłówkiem `apikey: <publishable>`.
 - Każda zmiana schematu = nowy plik `supabase/migrations/00N_*.sql` (idempotentny) uruchamiany przez Jędrzeja w SQL Editorze.
+
+**Test na żywo 24.11 (przeglądarka wbudowana, Supabase „skipp", scenariusz = placeholder)** — przeszedł:
+wgranie scenariusza z panelu, 2 zespoły, tryb testowy 30 s, logowanie, 10 błędnych kodów → „Zbyt wiele błędnych prób", po 15 s poprawny kod działa,
+kupno (20 szt. indeksu), zamknięcie tury → nowe kursy na graczu i projektorze, start tury 2 → podsumowanie kwartału 1 na projektorze,
+`get_scenario` podczas tury 1: kursy/stopy/newsy przyszłych tur = null/puste, brak hashy haseł. Po teście: reset gry bez zespołów, tryb testowy wyłączony;
+w bazie zostaje scenariusz-placeholder (podmienić prawdziwym).
+Błędy znalezione i naprawione: (1) panel bez scenariusza nie dostawał stanu gry („Gra nie jest zainicjalizowana"); (2) tuż po zamknięciu tury gracz
+na ułamek sekundy widział kurs 0 zł (zdarzenie przed zmianą wiersza gry) — `js/app.js` pobiera scenariusz ponownie, gdy brakuje kursu dla bieżącej fazy.
+Nie testowano: dwóch urządzeń naraz (fizycznie), realtime między różnymi przeglądarkami, odsłaniania eventów miesięcy w trakcie tury.
