@@ -1,0 +1,10 @@
+{
+  "name": "skipp-gielda",
+  "private": true,
+  "type": "module",
+  "description": "Giełda Hufca — gra edukacyjna o inwestowaniu (statyczna aplikacja, bez kroku budowania)",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8000"
+  }
+}

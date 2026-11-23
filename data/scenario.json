@@ -1,0 +1,606 @@
+{
+  "meta": {
+    "title": "Giełda Hufca",
+    "subtitle": "TODO: podtytuł gry",
+    "version": "placeholder-1",
+    "currency": "zł"
+  },
+  "config": {
+    "turns": 6,
+    "turnSeconds": 600,
+    "testTurnSeconds": 30,
+    "monthsPerTurn": 3,
+    "startCapital": 10000,
+    "positionLimit": 0.4,
+    "positionLimitExemptTypes": [
+      "cash"
+    ],
+    "puzzleReward": 500,
+    "rankingPlannedTurns": [3, 5]
+  },
+  "assets": [
+    {
+      "id": "cash",
+      "type": "cash",
+      "name": "Śledzie do namiotu",
+      "ticker": "ŚLEDZ",
+      "description": "TODO: opis gotówki (inflacja zjada jej wartość).",
+      "rates": [-0.015, -0.015, -0.015, -0.015, -0.015, -0.015]
+    },
+    {
+      "id": "bond",
+      "type": "bond",
+      "name": "Obligacje Komendy",
+      "ticker": "OBL",
+      "description": "TODO: opis obligacji.",
+      "rates": [0.01, 0.01, 0.01, 0.02, 0.02, 0.02]
+    },
+    {
+      "id": "idx",
+      "type": "index",
+      "name": "Indeks CHORĄGIEW",
+      "ticker": "CHOR",
+      "description": "TODO: opis indeksu (ETF).",
+      "prices": [100, 94.62, 89.35, 84.41, 90.66, 96.29, 102.12]
+    },
+    {
+      "id": "d01",
+      "type": "stock",
+      "name": "Drużyna A",
+      "ticker": "DRA",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny A.",
+      "prices": [72, 66.07, 72.54, 94.14, 105.79, 118.51, 100.14]
+    },
+    {
+      "id": "d02",
+      "type": "stock",
+      "name": "Drużyna B",
+      "ticker": "DRB",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny B.",
+      "prices": [91, 103.65, 124.91, 144.48, 135.2, 160.43, 137.28]
+    },
+    {
+      "id": "d03",
+      "type": "stock",
+      "name": "Drużyna C",
+      "ticker": "DRC",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny C.",
+      "prices": [66, 57.99, 50.16, 59.35, 72.95, 88.58, 71.86]
+    },
+    {
+      "id": "d04",
+      "type": "stock",
+      "name": "Drużyna D",
+      "ticker": "DRD",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny D.",
+      "prices": [58, 66.83, 63.58, 57.45, 54.72, 68.69, 84.41]
+    },
+    {
+      "id": "d05",
+      "type": "stock",
+      "name": "Drużyna E",
+      "ticker": "DRE",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny E.",
+      "prices": [54, 53.23, 63.92, 54.01, 45.21, 41.81, 40.03]
+    },
+    {
+      "id": "d06",
+      "type": "stock",
+      "name": "Drużyna F",
+      "ticker": "DRF",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny F.",
+      "prices": [60, 77.11, 77.66, 90.43, 79.03, 78.22, 96.24]
+    },
+    {
+      "id": "d07",
+      "type": "stock",
+      "name": "Drużyna G",
+      "ticker": "DRG",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny G.",
+      "prices": [86, 79.06, 82.59, 100.4, 113.97, 92.44, 99.29]
+    },
+    {
+      "id": "d08",
+      "type": "stock",
+      "name": "Drużyna H",
+      "ticker": "DRH",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny H.",
+      "prices": [27, 30.51, 29.59, 33.58, 29.88, 28.69, 27.84]
+    },
+    {
+      "id": "d09",
+      "type": "stock",
+      "name": "Drużyna I",
+      "ticker": "DRI",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny I.",
+      "prices": [53, 67.27, 66.38, 50.62, 44.98, 37.02, 41.34]
+    },
+    {
+      "id": "d10",
+      "type": "stock",
+      "name": "Drużyna J",
+      "ticker": "DRJ",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny J.",
+      "prices": [20, 18.15, 16.41, 16.08, 13.99, 16.67, 16.9]
+    },
+    {
+      "id": "d11",
+      "type": "stock",
+      "name": "Drużyna K",
+      "ticker": "DRK",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny K.",
+      "prices": [63, 76.64, 83.33, 94.55, 71.99, 75.93, 75.69]
+    },
+    {
+      "id": "d12",
+      "type": "stock",
+      "name": "Drużyna L",
+      "ticker": "DRL",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny L.",
+      "prices": [61, 68.02, 61.93, 63.07, 80.4, 69.21, 71.67]
+    },
+    {
+      "id": "d13",
+      "type": "stock",
+      "name": "Drużyna M",
+      "ticker": "DRM",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny M.",
+      "prices": [93, 100.93, 76.48, 84.27, 93.28, 90.43, 107.84]
+    },
+    {
+      "id": "d14",
+      "type": "stock",
+      "name": "Drużyna N",
+      "ticker": "DRN",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny N.",
+      "prices": [75, 67.91, 80.54, 104.5, 106.7, 91.19, 96.93]
+    },
+    {
+      "id": "d15",
+      "type": "stock",
+      "name": "Drużyna O",
+      "ticker": "DRO",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny O.",
+      "prices": [74, 90.6, 96.46, 109.11, 87.01, 109.96, 87.76]
+    },
+    {
+      "id": "d16",
+      "type": "stock",
+      "name": "Drużyna P",
+      "ticker": "DRP",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny P.",
+      "prices": [39, 38.97, 46.47, 42.77, 52.33, 46, 54.86]
+    },
+    {
+      "id": "d17",
+      "type": "stock",
+      "name": "Drużyna Q",
+      "ticker": "DRQ",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny Q.",
+      "prices": [53, 52.29, 39.47, 36.6, 41.71, 50.24, 59.63]
+    },
+    {
+      "id": "d18",
+      "type": "stock",
+      "name": "Drużyna R",
+      "ticker": "DRR",
+      "group": "TODO: grupa 1 (np. DSH Trop)",
+      "description": "TODO: krótki opis drużyny R.",
+      "prices": [100, 107.53, 131.5, 120.85, 91.02, 80.99, 84.28]
+    },
+    {
+      "id": "d19",
+      "type": "stock",
+      "name": "Drużyna S",
+      "ticker": "DRS",
+      "group": "TODO: grupa 2 (fikcyjne)",
+      "description": "TODO: krótki opis drużyny S.",
+      "prices": [72, 81.15, 90.86, 92.54, 102.78, 128.99, 145.14]
+    },
+    {
+      "id": "d20",
+      "type": "stock",
+      "name": "Drużyna T",
+      "ticker": "DRT",
+      "group": "TODO: grupa 2 (fikcyjne)",
+      "description": "TODO: krótki opis drużyny T.",
+      "prices": [30, 31.9, 27.66, 31.03, 30.82, 28.55, 32.17]
+    },
+    {
+      "id": "d21",
+      "type": "stock",
+      "name": "Drużyna U",
+      "ticker": "DRU",
+      "group": "TODO: grupa 2 (fikcyjne)",
+      "description": "TODO: krótki opis drużyny U.",
+      "prices": [48, 45.94, 40.66, 37.9, 30.9, 32.41, 41.59]
+    },
+    {
+      "id": "d22",
+      "type": "stock",
+      "name": "Drużyna V",
+      "ticker": "DRV",
+      "group": "TODO: grupa 2 (fikcyjne)",
+      "description": "TODO: krótki opis drużyny V.",
+      "prices": [76, 78.66, 94.73, 112.73, 104.38, 105.71, 107.11]
+    },
+    {
+      "id": "d23",
+      "type": "stock",
+      "name": "Drużyna W",
+      "ticker": "DRW",
+      "group": "TODO: grupa 2 (fikcyjne)",
+      "description": "TODO: krótki opis drużyny W.",
+      "prices": [31, 38.38, 36.06, 27.2, 29.51, 28.46, 22.86]
+    },
+    {
+      "id": "pewniak",
+      "type": "special",
+      "name": "Fundusz Pewniak",
+      "ticker": "PEWN",
+      "description": "TODO: opis funduszu Pewniak.",
+      "prices": [10, 10, 10, 12, 0, 0, 0],
+      "buyTurns": [3],
+      "sellTurns": [],
+      "offer": {
+        "title": "TODO: Oferta specjalna — Fundusz Pewniak",
+        "body": "TODO: treść oferty (gwarantowany zysk!...)."
+      }
+    }
+  ],
+  "turns": [
+    {
+      "turn": 1,
+      "label": "Kwartał 1",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 1",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 1",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d01"
+        },
+        {
+          "title": "TODO: News 3 tury 1",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 1 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 1)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "label": "Kwartał 2",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 2",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 2",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d04"
+        },
+        {
+          "title": "TODO: News 3 tury 2",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 2 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 2)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "label": "Kwartał 3",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 3",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 3",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d07"
+        },
+        {
+          "title": "TODO: News 3 tury 3",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 3 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 3)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "label": "Kwartał 4",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 4",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 4",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d10"
+        },
+        {
+          "title": "TODO: News 3 tury 4",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 4 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 4)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "label": "Kwartał 5",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 5",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 5",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d13"
+        },
+        {
+          "title": "TODO: News 3 tury 5",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 5 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 5)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "label": "Kwartał 6",
+      "news": [
+        {
+          "title": "TODO: News 1 tury 6",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "global"
+        },
+        {
+          "title": "TODO: News 2 tury 6",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "asset": "d16"
+        },
+        {
+          "title": "TODO: News 3 tury 6",
+          "body": "TODO: 2–3 zdania treści newsa.",
+          "why": "TODO: jedno zdanie „z czego wynika”.",
+          "scope": "biwak"
+        }
+      ],
+      "summary": "TODO: podsumowanie kwartału 6 (pokazywane na starcie kolejnej tury).",
+      "months": [
+        {
+          "name": "Miesiąc 1",
+          "event": null
+        },
+        {
+          "name": "Miesiąc 2",
+          "event": {
+            "title": "TODO: event miesiąca (tura 6)",
+            "body": "TODO: opis eventu, np. BIWAK albo wybory komendanta."
+          }
+        },
+        {
+          "name": "Miesiąc 3",
+          "event": null
+        }
+      ]
+    }
+  ],
+  "puzzles": [
+    {
+      "id": "z1",
+      "title": "Zagadka 1",
+      "hint": "TODO: treść/wskazówka karty 1",
+      "answers": [
+        "hasło jeden"
+      ],
+      "reward": 500
+    },
+    {
+      "id": "z2",
+      "title": "Zagadka 2",
+      "hint": "TODO: treść/wskazówka karty 2",
+      "answers": [
+        "hasło dwa",
+        "haslo 2"
+      ]
+    },
+    {
+      "id": "z3",
+      "title": "Zagadka 3",
+      "hint": "TODO: treść/wskazówka karty 3",
+      "answers": [
+        "hasło trzy"
+      ]
+    },
+    {
+      "id": "z4",
+      "title": "Zagadka 4",
+      "hint": "TODO: treść/wskazówka karty 4 (hasło zapisane jako hash SHA-256; przykładowe hasło: „Tajne hasło”)",
+      "answerHashes": [
+        "c616a565468c30bb8542b4cf2c041f2a3a38e2978846593a3264526c9f5f787c"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "title": "Cel gry",
+      "body": "TODO: cel gry."
+    },
+    {
+      "title": "Przebieg tury",
+      "body": "TODO: jak wygląda tura (kwartał), zegar miesięcy, newsy."
+    },
+    {
+      "title": "Handel",
+      "body": "TODO: kupno/sprzedaż po cenie bieżącej tury, limit pozycji."
+    },
+    {
+      "title": "Zagadki",
+      "body": "TODO: jak działają zagadki i dotacje."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Akcja",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Obligacja",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Indeks / ETF",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Inflacja",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Stopa procentowa",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Dywersyfikacja",
+      "definition": "TODO: definicja."
+    },
+    {
+      "term": "Portfel",
+      "definition": "TODO: definicja."
+    }
+  ]
+}
