@@ -152,8 +152,8 @@ function renderLogin() {
         ${teams.length ? `
           <div><label for="lteam">Zespół</label>
             <select id="lteam" data-keep="lteam" required><option value="">— wybierz —</option>${teams.map((t) => `<option>${escapeHtml(t.name)}</option>`).join('')}</select></div>
-          <div><label for="lcode">Kod zespołu (4 cyfry)</label>
-            <input id="lcode" data-keep="lcode" class="big" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required placeholder="••••"></div>
+          <div><label for="lcode">Kod zespołu (6 cyfr)</label>
+            <input id="lcode" data-keep="lcode" class="big" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" autocomplete="off" required placeholder="••••••"></div>
           <button class="primary block" type="submit">Wejdź</button>`
     : '<p class="muted">Prowadzący nie dodał jeszcze zespołów. Strona odświeży się sama.</p>'}
         <p class="muted small">Cały zespół gra razem — możecie zalogować się na kilku telefonach tym samym kodem.</p>

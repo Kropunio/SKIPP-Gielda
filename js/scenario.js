@@ -15,7 +15,8 @@ const hasMax2Decimals = (v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6;
  * Sprawdza scenariusz. Zwraca { ok, errors: string[], warnings: string[] }.
  * Błędy blokują grę, ostrzeżenia (np. placeholdery "TODO") tylko informują.
  */
-export function validateScenario(s) {
+export function validateScenario(s, { partial = false } = {}) {
+  // partial: scenariusz „odsłonięty” z serwera — kursy/stopy przyszłych tur mogą być null, zagadki bez haseł.
   const errors = [];
   const warnings = [];
   const err = (path, msg) => errors.push(`${path}: ${msg}`);
@@ -69,12 +70,12 @@ export function validateScenario(s) {
       if (a.type === 'cash' || a.type === 'bond') {
         if (!Array.isArray(a.rates) || a.rates.length !== turns)
           err(`${p}.rates`, `wymagana lista ${turns} stóp (po jednej na turę), np. -0.015 = -1,5%`);
-        else a.rates.forEach((r, j) => { if (!isNum(r) || r <= -1 || r >= 1) err(`${p}.rates[${j}]`, 'stopa jako ułamek w przedziale (-1, 1)'); });
+        else a.rates.forEach((r, j) => { if (partial && r === null) return; if (!isNum(r) || r <= -1 || r >= 1) err(`${p}.rates[${j}]`, 'stopa jako ułamek w przedziale (-1, 1)'); });
         if (a.prices !== undefined) err(`${p}.prices`, `typ ${a.type} nie ma kursów — użyj "rates"`);
       } else {
         if (!Array.isArray(a.prices) || a.prices.length !== turns + 1)
           err(`${p}.prices`, `wymagana lista ${turns + 1} kursów (tury 1–${turns} + wycena końcowa)`);
-        else a.prices.forEach((v, j) => { if (!isNum(v) || v < 0 || !hasMax2Decimals(v)) err(`${p}.prices[${j}]`, 'kurs >= 0, maks. 2 miejsca po przecinku'); });
+        else a.prices.forEach((v, j) => { if (partial && v === null) return; if (!isNum(v) || v < 0 || !hasMax2Decimals(v)) err(`${p}.prices[${j}]`, 'kurs >= 0, maks. 2 miejsca po przecinku'); });
       }
       for (const key of ['buyTurns', 'sellTurns']) {
         if (a[key] === undefined) continue;
@@ -132,7 +133,7 @@ export function validateScenario(s) {
     const hashes = z.answerHashes ?? [];
     if (!Array.isArray(answers) || !Array.isArray(hashes)) err(p, '"answers" i "answerHashes" muszą być listami');
     else {
-      if (answers.length + hashes.length === 0) err(p, 'wymagane co najmniej jedno hasło ("answers") lub hash ("answerHashes")');
+      if (!partial && answers.length + hashes.length === 0) err(p, 'wymagane co najmniej jedno hasło ("answers") lub hash ("answerHashes")');
       answers.forEach((a, j) => { if (!isStr(a) || normalizeAnswerForValidation(a) === '') err(`${p}.answers[${j}]`, 'hasło nie może być puste po normalizacji'); });
       hashes.forEach((h, j) => { if (typeof h !== 'string' || !/^[0-9a-fA-F]{64}$/.test(h)) err(`${p}.answerHashes[${j}]`, 'hash SHA-256 (64 znaki hex) znormalizowanego hasła'); });
     }

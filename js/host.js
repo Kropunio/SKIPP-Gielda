@@ -4,6 +4,7 @@ import { PHASE, portfolio, ranking, turnClock, getAsset, isUnitAsset, balanceBre
 import { escapeHtml, formatMoney, formatClock, formatTime, formatInt, parseMoneyInput } from './format.js';
 import { $, toast, openDialog, confirmDialog, rerender, breakdownHtml, rankingHtml, PHASE_LABEL, qtyLabel, IDLE_CLOCK } from './ui.js';
 import { portfoliosCsv, transactionsCsv } from './export.js';
+import { validateScenario } from './scenario.js';
 
 const root = document.getElementById('root');
 let ctx = null;
@@ -11,7 +12,7 @@ let pin = null;
 let pinKey, codesKey;
 let synced = false;
 
-boot({ onUpdate: () => render() }).then((c) => {
+boot({ onUpdate: () => render(), allowNoScenario: true }).then((c) => {
   ctx = c;
   pinKey = `gielda:pin:${ctx.store.gameId}`;
   codesKey = `gielda:codes:${ctx.store.gameId}`;
@@ -21,6 +22,7 @@ boot({ onUpdate: () => render() }).then((c) => {
   setInterval(tick, 500);
   root.addEventListener('click', onClick);
   root.addEventListener('submit', onSubmit);
+  root.addEventListener('change', onFile);
 }).catch((e) => console.error(e));
 
 const codes = () => { try { return JSON.parse(localStorage.getItem(codesKey) || '{}'); } catch { return {}; } };
@@ -63,14 +65,15 @@ function render() {
   const g = ctx.game;
   if (!g) return rerender(root, ctx.store.mode === 'local' ? viewSetupLocal() : viewSetupSupabase());
   if (!pin) return rerender(root, viewPin());
+  if (!ctx.scenario) return rerender(root, viewUpload());
   rerender(root, viewPanel());
   tick();
 }
 
 function header() {
-  const s = ctx.scenario;
+  const title = ctx.scenario?.meta.title || 'Giełda Hufca';
   return `<div class="row between" style="margin-bottom:1rem">
-    <div><h1>${escapeHtml(s.meta.title)} — panel prowadzącego</h1>
+    <div><h1>${escapeHtml(title)} — panel prowadzącego</h1>
       <div class="muted small">${escapeHtml(ctx.store.label)} · gra „${escapeHtml(ctx.store.gameId)}”${ctx.store.status === 'offline' ? ' · <span class="warn">brak połączenia</span>' : ''}</div></div>
     <div class="row"><a class="btn small" href="index.html${location.search}" target="_blank">Ekran gracza ↗</a><a class="btn small" href="screen.html${location.search}" target="_blank">Projektor ↗</a>
       ${pin ? '<button class="small ghost" data-act="logout">Wyloguj</button>' : ''}</div></div>`;
@@ -88,7 +91,7 @@ function viewSetupLocal() {
 function viewSetupSupabase() {
   return `${header()}<section class="card stack" style="max-width:640px"><h2>Gra nie jest jeszcze zainicjalizowana</h2>
     <p>W Supabase otwórz <b>SQL Editor</b> i wykonaj (z własnym PIN-em):</p>
-    <pre class="card flat" style="white-space:pre-wrap">select public.admin_init_game('${escapeHtml(ctx.store.gameId)}', 'TWÓJ-PIN', ${ctx.scenario.config.turns});</pre>
+    <pre class="card flat" style="white-space:pre-wrap">select public.admin_init_game('${escapeHtml(ctx.store.gameId)}', 'TWÓJ-PIN-min-8-znaków', 6);</pre>
     <p class="muted">Szczegóły: docs/SETUP.md. Strona odświeży się sama.</p></section>`;
 }
 
@@ -97,6 +100,17 @@ function viewPin() {
     <h2>Zaloguj się PIN-em</h2>
     <input id="pin" type="password" autocomplete="current-password" required placeholder="PIN" data-keep="pin">
     <button class="primary block" type="submit">Wejdź</button></form>`;
+}
+
+function viewUpload() {
+  return `${header()}<section class="card stack" style="max-width:640px"><h2>Wgraj scenariusz gry</h2>
+    <p>W bazie nie ma jeszcze scenariusza. Wybierz plik JSON (format: docs/SCENARIO.md). Kursy i newsy przyszłych tur zostaną na serwerze i
+    będą odsłaniane graczom dopiero wraz z postępem gry.</p>${uploadControl()}</section>`;
+}
+
+function uploadControl() {
+  return `<label class="btn" style="display:inline-block;cursor:pointer">⬆ Wybierz plik scenariusza (.json)
+    <input type="file" id="scfile" accept=".json,application/json" hidden></label>`;
 }
 
 function viewPanel() {
@@ -140,7 +154,7 @@ function viewPanel() {
   const teamsCard = `<section class="card stack">
     <div class="row between"><h2>Zespoły (${ctx.snapshot.teams.length})</h2><button class="small" data-act="print" ${ctx.snapshot.teams.length ? '' : 'disabled'}>🖨 Drukuj kody</button></div>
     <form id="addteam" class="row"><input class="grow" style="width:auto" id="tname" data-keep="tname" placeholder="Nazwa zespołu, np. ${escapeHtml('Zespół 1')}" maxlength="40" required><button class="primary" type="submit">Dodaj</button></form>
-    ${teamRows ? `<table><thead><tr><th>Zespół</th><th>Kod</th><th></th></tr></thead><tbody>${teamRows}</tbody></table>` : '<p class="muted">Dodaj 3–5 zespołów. Kody (4 cyfry) widać tylko tutaj — wydrukuj je lub zapisz.</p>'}
+    ${teamRows ? `<table><thead><tr><th>Zespół</th><th>Kod</th><th></th></tr></thead><tbody>${teamRows}</tbody></table>` : '<p class="muted">Dodaj 3–5 zespołów. Kody (6 cyfr) widać tylko tutaj — wydrukuj je lub zapisz.</p>'}
     <p class="muted small">Kody są przechowywane jako hash — panel pamięta je tylko na urządzeniu, na którym je utworzono. Zgubiony kod: „Nowy kod”.</p>
   </section>`;
 
@@ -203,12 +217,17 @@ function viewPanel() {
     </form>
     <p class="muted small">Przed grą: przetestuj w trybie testowym, potem zresetuj z zachowaniem zespołów.</p></section>`;
 
+  const scenarioCard = ctx.store.mode === 'supabase'
+    ? `<section class="card stack wide"><h2>Scenariusz</h2>
+        <p class="muted small">Wgrany scenariusz: „${escapeHtml(s.meta.title)}”${s.meta.version ? ` · wersja ${escapeHtml(String(s.meta.version))}` : ''}. Przyszłe kursy i newsy są ukryte przed graczami do czasu odsłonięcia tury.
+        Ponowne wgranie podmienia treść gry (id aktywów i zagadek zostaw bez zmian).</p>${uploadControl()}</section>`
+    : '';
   return `${header()}<div class="host-grid">${control}${teamsCard}${portfolios}${adjustCard}
-    <section class="card stack"><h2>Ranking (podgląd)</h2>${rankingHtml(rk)}</section>${log}${danger}</div>`;
+    <section class="card stack"><h2>Ranking (podgląd)</h2>${rankingHtml(rk)}</section>${log}${scenarioCard}${danger}</div>`;
 }
 
 function tick() {
-  if (!ctx?.state || !$('#hclk')) return;
+  if (!ctx?.state || !ctx.scenario || !$('#hclk')) return;
   const st = ctx.state;
   const c = turnClock(st.turnStartedAt, st.turnDuration, ctx.store.now(), ctx.scenario.config.monthsPerTurn);
   if (st.phase === PHASE.OPEN && c.running) {
@@ -232,7 +251,7 @@ async function onSubmit(e) {
   if (id === 'setup') {
     const p1 = $('#p1').value, p2 = $('#p2').value;
     if (p1 !== p2) return toast('PIN-y się różnią.', 'bad');
-    const ok = await act(() => ctx.store.hostSetup(p1, s.config.turns), 'Gra utworzona.');
+    const ok = await act(() => ctx.store.hostSetup(p1, ctx.scenario?.config.turns ?? 6), 'Gra utworzona.');
     if (ok !== undefined || ctx.game) await verifyPin(p1);
   } else if (id === 'pinform') {
     await verifyPin($('#pin').value);
@@ -256,6 +275,23 @@ async function onSubmit(e) {
     await act(() => ctx.store.hostReset(pin, { keepTeams, testMode }), 'Gra zresetowana.');
     if (!keepTeams) localStorage.removeItem(codesKey);
   }
+}
+
+async function onFile(e) {
+  if (e.target.id !== 'scfile' || !e.target.files?.length) return;
+  const file = e.target.files[0];
+  e.target.value = '';
+  let json;
+  try { json = JSON.parse(await file.text()); } catch (err) { return toast(`To nie jest poprawny JSON: ${err.message}`, 'bad'); }
+  const v = validateScenario(json);
+  if (!v.ok) {
+    return openDialog('Scenariusz zawiera błędy', `<ul>${v.errors.slice(0, 30).map((m) => `<li>${escapeHtml(m)}</li>`).join('')}</ul>${v.errors.length > 30 ? `<p class="muted">…i ${v.errors.length - 30} więcej.</p>` : ''}`);
+  }
+  const warn = v.warnings.length ? ` Uwaga: ${v.warnings.join(' ')}` : '';
+  const replacing = !!ctx.scenario;
+  if (!(await confirmDialog('Wgrać scenariusz?', `„${json.meta.title}” — ${json.config.turns} tur, ${json.assets.length} aktywów, ${json.puzzles.length} zagadek.${replacing ? ' Obecny scenariusz w bazie zostanie podmieniony.' : ''}${warn}`, 'Wgraj'))) return;
+  const ok = await act(() => ctx.store.hostUploadScenario(pin, json), 'Scenariusz wgrany.');
+  if (ok !== undefined) await ctx.refreshScenario();
 }
 
 async function onClick(e) {

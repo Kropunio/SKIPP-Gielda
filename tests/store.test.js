@@ -31,7 +31,7 @@ test('LocalStore: przepływ gry i walidacja po stronie „serwera”', async () 
 
     const alfa = await store.hostCreateTeam('1234', 'Alfa');
     const bravo = await store.hostCreateTeam('1234', 'Bravo');
-    assert.match(alfa.code, /^\d{4}$/);
+    assert.match(alfa.code, /^\d{6}$/);
     await assert.rejects(store.hostCreateTeam('1234', ' alfa '), /już istnieje/);
     await assert.rejects(store.teamLogin('Alfa', alfa.code === '0000' ? '1111' : '0000'), /kod/);
     const who = await store.teamLogin(' alfa ', alfa.code);

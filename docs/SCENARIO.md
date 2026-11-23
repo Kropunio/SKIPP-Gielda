@@ -131,5 +131,19 @@ Dotacja trafia do gotówki raz na zespół. Panel prowadzącego po zalogowaniu w
 
 ## Uwaga o jawności
 
-Strona jest statyczna, więc `data/scenario.json` (łącznie z przyszłymi kursami) może pobrać każdy, kto zna adres.
-Przy publicznym repozytorium wgraj prawdziwy scenariusz jak najpóźniej i używaj `answerHashes` dla haseł.
+W trybie Supabase aplikacja **nie czyta** `data/scenario.json` z repozytorium. Prawdziwy scenariusz wgrywa się w panelu
+prowadzącego (plik z dysku) do tabeli niedostępnej dla klientów; serwer wydaje graczom funkcją `get_scenario` tylko to,
+co już odsłonięte:
+
+| Co | Kiedy widoczne |
+|---|---|
+| kurs tury 1 | od lobby |
+| kurs po turze *t* | po zamknięciu tury *t* |
+| stopa gotówki/obligacji dla tury *t* | od startu tury *t* (UI pokazuje ją jako oprocentowanie bieżącego kwartału) |
+| newsy tury *t* | od startu tury *t* |
+| podsumowanie tury *t* | od startu tury *t+1* (ostatniej: po zakończeniu gry) |
+| event miesiąca *m* tury *t* | od początku miesiąca *m* (wg zegara serwera) |
+
+Tryb lokalny (`?store=local` albo puste klucze w `config.js`) używa pliku w repo bez ukrywania — to tylko test.
+**Nie commituj prawdziwego scenariusza** do publicznego repo: trzymaj go poza repo albo w `data/private/`.
+Hasła zagadek nigdy nie trafiają na serwer jawnie — panel wysyła tylko `answerHashes`.

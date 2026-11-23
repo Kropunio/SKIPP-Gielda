@@ -19,7 +19,7 @@ import { CONFIG, isSupabaseConfigured } from './config.js';
 import { sha256Hex } from './sha256.js';
 import { puzzleHashes, GRACE_MS } from './engine.js';
 
-const CODE_RE = /^\d{4}$/;
+const CODE_RE = /^\d{4,8}$/;
 const ID_RE = /^[a-z0-9_-]{1,32}$/;
 
 export class StoreError extends Error {}
@@ -27,7 +27,7 @@ export class StoreError extends Error {}
 function randomCode() {
   const buf = new Uint32Array(1);
   (globalThis.crypto || { getRandomValues: (b) => { b[0] = Math.floor(Math.random() * 2 ** 32); return b; } }).getRandomValues(buf);
-  return String(buf[0] % 10000).padStart(4, '0');
+  return String(buf[0] % 1000000).padStart(6, '0');
 }
 function randomId() {
   if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
@@ -38,6 +38,16 @@ function randomId() {
 export function scenarioPuzzleHashes(scenario) {
   const out = {};
   for (const p of scenario.puzzles ?? []) out[p.id] = puzzleHashes(p);
+  return out;
+}
+
+/**
+ * Scenariusz do wgrania na serwer (tryb Supabase): bez jawnych haseł — zagadki mają tylko answerHashes.
+ * Serwer sam odsłania klientom kursy i newsy kolejnych tur (get_scenario).
+ */
+export function scenarioForUpload(scenario) {
+  const out = JSON.parse(JSON.stringify(scenario));
+  out.puzzles = (scenario.puzzles ?? []).map(({ answers, ...rest }) => ({ ...rest, answerHashes: puzzleHashes({ answers, answerHashes: rest.answerHashes }) }));
   return out;
 }
 
@@ -242,7 +252,7 @@ export class LocalStore extends BaseStore {
   async teamLogin(name, code) {
     const db = this.read();
     if (!db) throw new StoreError('Gra jeszcze nie istnieje.');
-    if (!CODE_RE.test(String(code ?? ''))) throw new StoreError('Kod to 4 cyfry.');
+    if (!CODE_RE.test(String(code ?? ''))) throw new StoreError('Kod to 6 cyfr.');
     const t = db.teams.find((x) => x.name.trim().toLowerCase() === String(name ?? '').trim().toLowerCase());
     if (!t || this.hashSecret(code, t.id) !== t.codeHash) throw new StoreError('Zła nazwa zespołu lub kod.');
     return { id: t.id, name: t.name };
@@ -422,10 +432,22 @@ export class SupabaseStore extends BaseStore {
   }
 
   async hostSetup() { throw new StoreError('W trybie Supabase grę zakłada się w SQL Editorze: select admin_init_game(...). Zob. docs/SETUP.md.'); }
-  async hostCheck(pin) { return this.rpc('host_check', { p_game: this.gameId, p_pin: pin }); }
-  async hostSyncScenario(pin, scenario) {
-    return this.rpc('host_sync_scenario', { p_game: this.gameId, p_pin: pin, p_total_turns: scenario.config.turns, p_puzzles: scenarioPuzzleHashes(scenario) });
+  async hostCheck(pin) {
+    const ok = await this.rpc('host_check', { p_game: this.gameId, p_pin: pin });
+    if (ok !== true) throw new StoreError('Nieprawidłowy PIN prowadzącego.');
+    return true;
   }
+  /** Scenariusz odsłonięty dla bieżącej fazy gry (kursy i newsy przyszłych tur ukryte) albo null, gdy jeszcze nie wgrany. */
+  async fetchScenario() {
+    const { data, error } = await this.sb.rpc('get_scenario', { p_game: this.gameId });
+    if (error) throw new StoreError(`Błąd pobierania scenariusza: ${error.message}`);
+    return data ?? null;
+  }
+  async hostUploadScenario(pin, scenario) {
+    return this.rpc('host_upload_scenario', { p_game: this.gameId, p_pin: pin, p_scenario: scenarioForUpload(scenario) });
+  }
+  // W trybie Supabase scenariusz wgrywa się ręcznie w panelu (hostUploadScenario) — nic nie synchronizujemy automatycznie.
+  async hostSyncScenario() {}
   async hostReset(pin, { keepTeams = true, testMode = false } = {}) {
     await this.rpc('host_reset_game', { p_game: this.gameId, p_pin: pin, p_keep_teams: keepTeams, p_test_mode: testMode });
     await this.fullReload();
@@ -453,14 +475,21 @@ export class SupabaseStore extends BaseStore {
     const { data, error } = await this.sb.rpc('team_login', { p_game: this.gameId, p_name: name, p_code: code });
     if (error) throw new StoreError(error.message);
     const row = Array.isArray(data) ? data[0] : data;
-    if (!row) throw new StoreError('Zła nazwa zespołu lub kod.');
+    if (row?.status === 'locked') throw new StoreError('Zbyt wiele błędnych prób — odczekaj ok. 15 sekund.');
+    if (!row || row.status !== 'ok') throw new StoreError('Zła nazwa zespołu lub kod.');
     return { id: row.id, name: row.name };
   }
   async teamTrade(teamId, code, { asset, side, qty }) {
-    return this.rpc('team_trade', { p_game: this.gameId, p_team: teamId, p_code: code, p_asset: asset, p_side: side, p_qty: qty });
+    const id = Number(await this.rpc('team_trade', { p_game: this.gameId, p_team: teamId, p_code: code, p_asset: asset, p_side: side, p_qty: qty }));
+    if (id === -2) throw new StoreError('Zbyt wiele błędnych prób kodu — odczekaj ok. 15 sekund.');
+    if (id < 0) throw new StoreError('Nieprawidłowy zespół lub kod.');
+    return id;
   }
   async teamPuzzle(teamId, code, puzzleId, normalizedAnswer) {
-    return this.rpc('team_puzzle', { p_game: this.gameId, p_team: teamId, p_code: code, p_puzzle: puzzleId, p_answer: normalizedAnswer });
+    const r = await this.rpc('team_puzzle', { p_game: this.gameId, p_team: teamId, p_code: code, p_puzzle: puzzleId, p_answer: normalizedAnswer });
+    if (r === 'locked') throw new StoreError('Zbyt wiele błędnych prób kodu — odczekaj ok. 15 sekund.');
+    if (r === 'denied') throw new StoreError('Nieprawidłowy zespół lub kod.');
+    return r;
   }
 }
 
