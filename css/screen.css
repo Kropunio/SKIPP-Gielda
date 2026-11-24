@@ -37,6 +37,10 @@ body { font-size: 2.1vh; }
 .s-prices .p .c { font-variant-numeric: tabular-nums; min-width: 4.8em; text-align: right; }
 .s-prices .p.idx { font-weight: 800; color: var(--accent); }
 .s-chart svg { width: 100%; height: 100%; }
+.s-bottom2 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.2vw; min-height: 0; height: 100%; }
+.s-bottom2 > .s-card { min-height: 0; }
+.s-bottom2 .s-ranking table { font-size: 2.6vh; }
+.s-bottom2 .s-ranking td { padding: .8vh .5vw; }
 .s-ranking table { font-size: 3vh; }
 .s-ranking td { padding: 1vh .8vw; }
 .s-ranking tr:first-child td { color: var(--accent); font-weight: 800; }

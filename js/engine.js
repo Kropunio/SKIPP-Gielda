@@ -409,6 +409,28 @@ export function ranking(scenario, st, idx = st.priceIndex) {
   return rows;
 }
 
+/**
+ * Historia wartości portfeli po turach (grosze): { labels, teams: [{ id, name, values }] }.
+ * Punkty: start (tura 0) i zamknięcia tur z historii. W otwartej turze dodatkowy punkt „teraz”
+ * (wycena po bieżących kursach, bez zapisu do historii).
+ */
+export function wealthSeries(scenario, st) {
+  const snaps = st.history.map((h) => ({ turn: h.turn, teams: h.teams }));
+  if (st.phase === PHASE.OPEN) {
+    const idx = priceIndexFor(st.phase, st.turn, totalTurns(scenario));
+    const teams = {};
+    for (const [id, t] of st.teams) teams[id] = { total: portfolioTotal(scenario, t, idx) };
+    snaps.push({ turn: st.turn, teams, current: true });
+  }
+  const labels = snaps.map((s) => (s.current ? 'teraz' : s.turn === 0 ? 'Start' : `K${s.turn}`));
+  const teams = [...st.teams.values()].map((t) => ({
+    id: t.id,
+    name: t.name,
+    values: snaps.map((s) => s.teams[t.id]?.total ?? null),
+  }));
+  return { labels, teams };
+}
+
 // ---------------------------------------------------------------- zegar
 
 /**

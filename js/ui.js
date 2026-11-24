@@ -134,7 +134,9 @@ export function priceRows(scenario, idx) {
 
 // ---------------------------------------------------------------- wykres SVG
 
-const PALETTE = ['#3fb6a8', '#ff8a65', '#9575cd', '#4fc3f7', '#aed581', '#f06292', '#ffd54f', '#7986cb', '#4db6ac', '#e57373', '#ba68c8', '#81c784'];
+// Kolory kategorii dla ciemnego tła (walidacja: dataviz/validate_palette, tryb dark, powierzchnia #1a1a19).
+// Kolejność stała — kolor przypisany do zespołu/aktywa nie zmienia się przy filtrowaniu.
+const PALETTE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9', '#e66767'];
 
 /**
  * Wykres wartości aktywów (kurs znormalizowany: start = 100) od indeksu 0 do upTo.
@@ -188,6 +190,88 @@ export function chartSvg(scenario, upTo, { width = 960, height = 360, labelsX } 
   for (const l of labelsOut) {
     const name = l.a.ticker || l.a.name;
     s += `<text x="${x(last) + 8}" y="${l.y + 4}" fill="${l.color}" font-size="${l.isIdx ? 15 : 13}" font-weight="${l.isIdx ? 800 : 600}">${escapeHtml(name)} ${Math.round(norm(l.a, last))}</text>`;
+  }
+  s += '</svg>';
+  return s;
+}
+
+const NICE_STEPS = [100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 50000];
+const niceStep = (raw) => NICE_STEPS.find((v) => v >= raw) ?? Math.ceil(raw / 50000) * 50000;
+const fmtZl = (zl) => Math.round(zl).toLocaleString('pl-PL');
+
+/**
+ * Wykres wartości portfeli (zł) po turach; series = wealthSeries(...) (wartości w groszach).
+ * teamIds: które zespoły rysować (gracz dostaje tylko swój — cudze wartości są ukryte do odsłonięcia rankingu);
+ * highlightId: zespół wyróżniony grubą linią; endLabels: 'name' (nazwa + wartość przy końcu linii),
+ * 'value' (tylko wartość), 'none'; startZl: linia kapitału startowego (przerywana).
+ * Identyfikacja: legenda przy końcu linii (kolor + nazwa w kolorze tekstu), tooltip (<title>) na każdym punkcie.
+ */
+export function wealthChartSvg(series, { width = 960, height = 360, teamIds = null, highlightId = null, endLabels = 'name', startZl = null } = {}) {
+  const teams = series.teams.filter((t) => !teamIds || teamIds.includes(t.id));
+  const labels = series.labels;
+  const n = labels.length;
+  const padL = 58;
+  const padR = endLabels === 'name' ? 190 : endLabels === 'value' ? 64 : 16;
+  const padT = 14, padB = 34;
+  const W = width - padL - padR, H = height - padT - padB;
+  const zl = (g) => (g == null ? null : g / 100);
+  const vals = teams.flatMap((t) => t.values.map(zl)).filter((v) => v != null);
+  if (startZl != null) vals.push(startZl);
+  let s = `<svg viewBox="0 0 ${width} ${height}" class="chart" role="img" aria-label="Wartość portfeli zespołów w czasie">`;
+  if (n < 2 || !vals.length) {
+    s += `<text x="${width / 2}" y="${height / 2}" fill="#8fa3b5" font-size="16" text-anchor="middle">Wykres pojawi się po pierwszej turze</text></svg>`;
+    return s;
+  }
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const span = Math.max(hi - lo, 1000);
+  const step = niceStep(span / 4);
+  const min = Math.max(0, Math.floor((lo - span * 0.06) / step) * step);
+  const max = Math.ceil((hi + span * 0.06) / step) * step;
+  const x = (i) => padL + (i / (n - 1)) * W;
+  const y = (v) => padT + H - ((v - min) / (max - min)) * H;
+
+  for (let v = min; v <= max + 1e-9; v += step) {
+    s += `<line x1="${padL}" x2="${padL + W}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="#2e3e4f" stroke-width="1"/>`;
+    s += `<text x="${padL - 6}" y="${(y(v) + 5).toFixed(1)}" fill="#8fa3b5" font-size="14" text-anchor="end">${fmtZl(v)}</text>`;
+  }
+  if (startZl != null) {
+    s += `<line x1="${padL}" x2="${padL + W}" y1="${y(startZl).toFixed(1)}" y2="${y(startZl).toFixed(1)}" stroke="#8fa3b5" stroke-dasharray="4 4" stroke-width="1"/>`;
+  }
+  labels.forEach((l, i) => {
+    s += `<text x="${x(i).toFixed(1)}" y="${height - 10}" fill="#e8eef4" font-size="14" text-anchor="middle">${escapeHtml(l)}</text>`;
+  });
+
+  const ends = [];
+  teams.forEach((t, k) => {
+    const color = PALETTE[k % PALETTE.length];
+    const isHi = highlightId != null && t.id === highlightId;
+    const dim = highlightId != null && !isHi;
+    const pts = [];
+    t.values.forEach((g, i) => { if (g != null) pts.push({ px: x(i), py: y(zl(g)), g, i }); });
+    if (!pts.length) return;
+    const w = isHi || teams.length === 1 ? 4 : 2.5;
+    s += `<polyline points="${pts.map((p) => `${p.px.toFixed(1)},${p.py.toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="${dim ? 0.4 : 1}"/>`;
+    for (const p of pts) {
+      s += `<circle cx="${p.px.toFixed(1)}" cy="${p.py.toFixed(1)}" r="${isHi ? 4.5 : 3}" fill="${color}" fill-opacity="${dim ? 0.4 : 1}"><title>${escapeHtml(t.name)} · ${escapeHtml(labels[p.i])}: ${escapeHtml(formatMoney(p.g))}</title></circle>`;
+    }
+    const last = pts[pts.length - 1];
+    ends.push({ name: t.name, color, isHi, px: last.px, y: last.py, g: last.g });
+  });
+
+  if (endLabels !== 'none') {
+    ends.sort((p, q) => p.y - q.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+    for (const e of ends) {
+      const tx = e.px + 8;
+      const ty = (e.y + 4).toFixed(1);
+      const weight = e.isHi ? 800 : 600;
+      if (endLabels === 'name') {
+        s += `<line x1="${tx}" x2="${tx + 12}" y1="${e.y.toFixed(1)}" y2="${e.y.toFixed(1)}" stroke="${e.color}" stroke-width="4" stroke-linecap="round"/>`;
+        s += `<text x="${tx + 17}" y="${ty}" fill="#e8eef4" font-size="15" font-weight="${weight}">${escapeHtml(e.name)} ${fmtZl(e.g / 100)} zł</text>`;
+      } else {
+        s += `<text x="${tx}" y="${ty}" fill="#e8eef4" font-size="14" font-weight="${weight}">${fmtZl(e.g / 100)} zł</text>`;
+      }
+    }
   }
   s += '</svg>';
   return s;

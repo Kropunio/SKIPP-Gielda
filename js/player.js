@@ -3,10 +3,10 @@ import { boot } from './app.js';
 import {
   PHASE, getAsset, isUnitAsset, priceOf, priceChange, portfolio, balanceBreakdown, quoteTrade, maxBuyAmount,
   canBuyInTurn, canSellInTurn, tradeCtx, turnClock, turnContent, ranking, normalizeAnswer, rateOf, cashAsset, valueOf,
-  startCapital,
+  startCapital, wealthSeries,
 } from './engine.js';
 import { escapeHtml, formatMoney, formatPercent, formatClock, formatTime, formatInt, parseMoneyInput } from './format.js';
-import { $, text, toast, openDialog, rerender, breakdownHtml, rankingHtml, changeHtml, money, signedClass, PHASE_LABEL, qtyLabel, IDLE_CLOCK } from './ui.js';
+import { $, text, toast, openDialog, rerender, breakdownHtml, rankingHtml, changeHtml, money, signedClass, PHASE_LABEL, qtyLabel, IDLE_CLOCK, wealthChartSvg } from './ui.js';
 
 const root = document.getElementById('root');
 let ctx = null;
@@ -212,6 +212,10 @@ function viewPortfel() {
       <div class="bigvalue">${escapeHtml(formatMoney(p.total))}</div>
       <div class="${signedClass(diff)}">${escapeHtml(formatMoney(diff, { sign: true }))} (${escapeHtml(formatPercent(diff / start, { sign: true }))}) od startu</div>
       <button class="primary block" data-act="breakdown">Skąd się wzięło moje saldo?</button>
+    </section>
+    <section class="card" style="margin-top:.75rem">
+      <div class="muted small">Historia wartości portfela</div>
+      ${wealthChartSvg(wealthSeries(s, st), { teamIds: [t.id], highlightId: t.id, endLabels: 'value', startZl: start / 100, width: 360, height: 210 })}
     </section>
     <section class="card" style="margin-top:.75rem">
       <table><tbody>

@@ -1,8 +1,8 @@
 // Ekran projektora (16:9): tura/kwartał, zegar tury i miesiąca, event miesiąca, newsy, kursy, wykres, ranking (gdy odsłonięty).
 import { boot } from './app.js';
-import { PHASE, turnClock, turnContent, ranking, isUnitAsset, priceOf, priceChange, rateOf, getAsset, startCapital } from './engine.js';
+import { PHASE, turnClock, turnContent, ranking, wealthSeries, isUnitAsset, priceOf, priceChange, rateOf, getAsset, startCapital } from './engine.js';
 import { escapeHtml, formatMoney, formatClock, formatPercent } from './format.js';
-import { $, text, chartSvg, rankingHtml, changeHtml, PHASE_LABEL, IDLE_CLOCK } from './ui.js';
+import { $, text, chartSvg, wealthChartSvg, rankingHtml, changeHtml, PHASE_LABEL, IDLE_CLOCK } from './ui.js';
 
 const root = document.getElementById('root');
 const NEWS_MS = 12000;
@@ -90,7 +90,9 @@ function render() {
   const prices = `<div class="s-card"><h2>Kursy ${st.phase === PHASE.CLOSED ? '(nowe — po zamknięciu tury)' : ''}</h2><div class="s-prices" style="grid-template-columns:repeat(${s.assets.length > 18 ? 3 : 2}, 1fr)">${cashRow}${rows}</div></div>`;
   let bottom;
   if (g?.rankingVisible) {
-    bottom = `<div class="s-card s-ranking"><h2>Ranking</h2>${rankingHtml(ranking(s, st))}</div>`;
+    // ranking + historia wartości portfeli wszystkich zespołów (po odsłonięciu)
+    bottom = `<div class="s-bottom2"><div class="s-card s-ranking"><h2>Ranking</h2>${rankingHtml(ranking(s, st))}</div>` +
+      `<div class="s-card s-chart"><h2>Wartość portfeli po turach (zł)</h2><div style="height:calc(100% - 3.5vh)">${wealthChartSvg(wealthSeries(s, st), { width: 760, height: 400, endLabels: 'name', startZl: startCapital(s) / 100 })}</div></div></div>`;
   } else {
     bottom = `<div class="s-card s-chart"><h2>Kursy względem startu (start = 100)</h2><div style="height:calc(100% - 3.5vh)">${chartSvg(s, idx, { width: 1200, height: 340 })}</div></div>`;
   }
